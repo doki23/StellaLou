@@ -29,7 +29,7 @@ public class ReentrantSpinLock {
     private final AtomicReference<InnerState> state = new AtomicReference<>();
 
     public void lock() {
-        if (_INNER_STATE.get() == null) {
+        if (!ownedByCurrentThread()) {
             InnerState inner = new InnerState();
             _INNER_STATE.set(inner);
             while (!state.compareAndSet(null, inner)) {
@@ -57,6 +57,6 @@ public class ReentrantSpinLock {
     }
 
     public boolean ownedByCurrentThread() {
-        return _INNER_STATE.get() == state.get();
+        return _INNER_STATE.get() != null &&_INNER_STATE.get() == state.get();
     }
 }
