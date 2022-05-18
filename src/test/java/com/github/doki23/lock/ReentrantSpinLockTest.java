@@ -6,12 +6,14 @@ import java.util.concurrent.CountDownLatch;
 
 public class ReentrantSpinLockTest {
     private static class Incr {
-        private ReentrantSpinLock lock = new ReentrantSpinLock();
+        private final ReentrantSpinLock lock = new ReentrantSpinLock();
         private int i;
 
         private void incr() {
             lock.lock();
+            lock.lock();
             i++;
+            lock.unlock();
             lock.unlock();
         }
 
