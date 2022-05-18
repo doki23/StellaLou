@@ -16,14 +16,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * }
  */
 public class ReentrantSpinLock {
-    private static final ThreadLocal<InnerState> _INNER_STATE = ThreadLocal.withInitial(InnerState::new);
+    private static final ThreadLocal<InnerState> _INNER_STATE = new ThreadLocal<>();
 
     private static class InnerState {
-        private final Thread owner;
         private int cnt;
 
         public InnerState() {
-            this.owner = Thread.currentThread();
             this.cnt = 1;
         }
     }
@@ -31,9 +29,9 @@ public class ReentrantSpinLock {
     private final AtomicReference<InnerState> state = new AtomicReference<>();
 
     public void lock() {
-        Thread currentThread = Thread.currentThread();
-        if (!ownedBy(currentThread)) {
-            InnerState inner = _INNER_STATE.get();
+        if (_INNER_STATE.get() == null) {
+            InnerState inner = new InnerState();
+            _INNER_STATE.set(inner);
             while (!state.compareAndSet(null, inner)) {
                 // do nothing
             }
@@ -58,12 +56,7 @@ public class ReentrantSpinLock {
         }
     }
 
-    public boolean ownedBy(Thread t) {
-        InnerState innerState = state.get();
-        return innerState != null && innerState.owner == t;
-    }
-
     public boolean ownedByCurrentThread() {
-        return ownedBy(Thread.currentThread());
+        return _INNER_STATE.get() == state.get();
     }
 }
